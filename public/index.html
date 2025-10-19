@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bookmarks</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; margin: 2rem; }
+      header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+      .site { border: 1px solid #e5e7eb; padding: 1rem; border-radius: 8px; margin-bottom: 0.75rem; display: flex; gap: 1rem; }
+      .site img { width: 24px; height: 24px; border-radius: 4px; }
+      .meta { flex: 1; }
+      .tags { color: #6b7280; font-size: 0.875rem; }
+      a.button { padding: 0.5rem 0.75rem; background: #111827; color: white; text-decoration: none; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Bookmarks</h1>
+      <a href="/add" class="button">Add</a>
+    </header>
+    <div id="list"></div>
+
+    <script>
+      async function load() {
+        try {
+          const res = await fetch('/api/sites');
+          const data = await res.json();
+          const list = document.getElementById('list');
+          list.innerHTML = '';
+          if (!data.sites || data.sites.length === 0) {
+            list.innerHTML = '<p>No sites yet. Click Add to create one.</p>';
+            return;
+          }
+          for (const s of data.sites) {
+            const el = document.createElement('div');
+            el.className = 'site';
+            el.innerHTML = `
+              <div><img src="${s.favicon || '/static/favicon.png'}" alt="favicon"></div>
+              <div class="meta">
+                <div><a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.title || s.url}</a></div>
+                ${s.description ? `<div class="desc">${s.description}</div>` : ''}
+                <div class="tags">${(s.categories || []).join(', ')} ${(s.tags && s.tags.length ? ' · ' + s.tags.join(', ') : '')}</div>
+              </div>
+            `;
+            list.appendChild(el);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      load();
+    </script>
+  </body>
+</html>

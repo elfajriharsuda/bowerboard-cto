@@ -1,0 +1,168 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Add Site</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif; margin: 2rem; }
+      form { max-width: 720px; }
+      label { display: block; margin-top: 1rem; font-weight: 600; }
+      input[type="text"], textarea, select { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
+      textarea { min-height: 96px; }
+      .row { display: flex; gap: 0.5rem; align-items: center; }
+      .actions { margin-top: 1.5rem; display: flex; gap: 0.75rem; }
+      button { padding: 0.5rem 0.75rem; border: none; background: #111827; color: white; border-radius: 6px; cursor: pointer; }
+      .secondary { background: #4b5563; }
+      .success { color: #065f46; margin-top: 0.5rem; }
+      .error { color: #991b1b; margin-top: 0.5rem; }
+      a { color: #111827; }
+      .small { font-size: 0.875rem; color: #6b7280; }
+    </style>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-hook-form@7.51.5/dist/index.umd.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body>
+    <a href="/">← Back</a>
+    <h1>Add Site</h1>
+    <div id="app"></div>
+
+    <script type="text/babel">
+      const { useEffect, useState } = React;
+      const { createRoot } = ReactDOM;
+      const { useForm } = ReactHookForm;
+
+      function useList(endpoint, key) {
+        const [items, setItems] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [error, setError] = useState('');
+        const load = async () => {
+          setLoading(true);
+          setError('');
+          try {
+            const res = await fetch(endpoint);
+            const data = await res.json();
+            setItems(data[key] || []);
+          } catch (e) {
+            setError('Failed to load');
+          } finally {
+            setLoading(false);
+          }
+        };
+        useEffect(() => { load(); }, []);
+        return { items, loading, error, reload: load };
+      }
+
+      function Add() {
+        const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+          defaultValues: { url: '', title: '', description: '', favicon: '', categories: [], tags: [] }
+        });
+        const categories = useList('/api/categories', 'categories');
+        const tags = useList('/api/tags', 'tags');
+        const [submitting, setSubmitting] = useState(false);
+        const [message, setMessage] = useState('');
+        const [errorMsg, setErrorMsg] = useState('');
+
+        const onFetchMetadata = async () => {
+          const url = watch('url');
+          setMessage('');
+          setErrorMsg('');
+          if (!url) { setErrorMsg('Enter a URL first'); return; }
+          try {
+            const res = await fetch('/api/metadata?url=' + encodeURIComponent(url));
+            if (!res.ok) throw new Error('Failed to fetch metadata');
+            const data = await res.json();
+            if (data.title) setValue('title', data.title);
+            if (data.description) setValue('description', data.description);
+            if (data.favicon) setValue('favicon', data.favicon);
+            setMessage('Metadata fetched. You can edit any field before submitting.');
+          } catch (e) {
+            setErrorMsg('Could not fetch metadata');
+          }
+        };
+
+        const onSubmit = async (values) => {
+          setSubmitting(true);
+          setMessage('');
+          setErrorMsg('');
+          try {
+            const res = await fetch('/api/sites', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(values) });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || 'Failed to save');
+            }
+            setMessage('Saved! Redirecting...');
+            setTimeout(() => { window.location.href = '/'; }, 700);
+          } catch (e) {
+            setErrorMsg(e.message || 'Failed to save');
+          } finally {
+            setSubmitting(false);
+          }
+        };
+
+        const addCategory = async () => {
+          const name = window.prompt('New category');
+          if (!name) return;
+          await fetch('/api/categories', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name }) });
+          categories.reload();
+        };
+        const addTag = async () => {
+          const name = window.prompt('New tag');
+          if (!name) return;
+          await fetch('/api/tags', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name }) });
+          tags.reload();
+        };
+
+        return (
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <label>URL</label>
+            <div className="row">
+              <input type="text" placeholder="https://example.com" {...register('url', { required: true })} />
+              <button className="secondary" type="button" onClick={onFetchMetadata}>Fetch metadata</button>
+            </div>
+            {errors.url && <div className="error small">URL is required</div>}
+
+            <label>Title</label>
+            <input type="text" placeholder="Page title" {...register('title')} />
+
+            <label>Description</label>
+            <textarea placeholder="Page description" {...register('description')} />
+
+            <label>Favicon URL</label>
+            <input type="text" placeholder="https://.../favicon.ico" {...register('favicon')} />
+
+            <label>Categories</label>
+            <div className="row">
+              <select multiple {...register('categories')}>
+                {categories.items.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button className="secondary" type="button" onClick={addCategory}>+ Add</button>
+            </div>
+            <div className="small">Hold Ctrl/Cmd to select multiple.</div>
+
+            <label>Tags</label>
+            <div className="row">
+              <select multiple {...register('tags')}>
+                {tags.items.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <button className="secondary" type="button" onClick={addTag}>+ Add</button>
+            </div>
+            <div className="small">Hold Ctrl/Cmd to select multiple.</div>
+
+            <div className="actions">
+              <button type="submit" disabled={submitting}>{submitting ? 'Saving...' : 'Submit'}</button>
+              <a className="secondary" href="/">Cancel</a>
+            </div>
+            {message && <div className="success">{message}</div>}
+            {errorMsg && <div className="error">{errorMsg}</div>}
+          </form>
+        );
+      }
+
+      const root = createRoot(document.getElementById('app'));
+      root.render(<Add />);
+    </script>
+  </body>
+</html>
