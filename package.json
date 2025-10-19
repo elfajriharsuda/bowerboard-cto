@@ -1,13 +1,15 @@
 {
-  "name": "bookmarks-app",
+  "name": "site-directory",
   "version": "0.1.0",
   "private": true,
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "dependencies": {
-    "cheerio": "^1.0.0-rc.12",
-    "express": "^4.19.2"
+    "next": "14.2.7",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   }
 }
