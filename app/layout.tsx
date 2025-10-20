@@ -19,9 +19,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span className="brand-title">Site Directory</span>
             </Link>
             <div className="header-actions">
-              <Link className="btn btn-primary" href="#add-site" prefetch={false}>
-                Add Site
-              </Link>
+              <nav style={{ display: "flex", gap: 8 }}>
+                <Link className="btn" href="/" prefetch={false}>Home</Link>
+                <Link className="btn btn-primary" href="/add" prefetch={false}>Add Site</Link>
+              </nav>
             </div>
           </div>
         </header>
