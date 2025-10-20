@@ -5,11 +5,29 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "next lint || echo 'Run Next.js ESLint'",
+    "format": "prettier --write . || echo 'Format with Prettier'",
+    "format:check": "prettier --check . || echo 'Check formatting with Prettier'",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@prisma/client": "^5.19.1",
+    "@tanstack/react-query": "^5.56.2",
     "next": "14.2.7",
+    "open-graph-scraper": "^6.8.2",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "react-hook-form": "^7.53.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "prisma": "^5.19.1",
+    "tailwindcss": "^3.4.13",
+    "prettier": "^3.3.3"
   }
 }

@@ -27,7 +27,7 @@ export default async function Home({ searchParams }: { searchParams: { [key: str
         <div className="state">
           <p style={{ margin: 0 }}>No sites match your filters.</p>
           <p style={{ margin: "8px 0 0", fontSize: 14 }}>
-            Try adjusting your search or filters. You can also <a href="#add-site">add a new site</a>.
+            Try adjusting your search or filters. You can also <a href="/add">add a new site</a>.
           </p>
         </div>
       ) : (
@@ -45,7 +45,7 @@ export default async function Home({ searchParams }: { searchParams: { [key: str
         <div className="card">
           <h2 style={{ margin: 0 }}>Add a site</h2>
           <p className="card-desc">Have a great site to share? Click below to suggest it.</p>
-          <a className="btn btn-primary" href="#">Submit a site</a>
+          <a className="btn btn-primary" href="/add">Submit a site</a>
         </div>
       </section>
     </div>
