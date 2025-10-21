@@ -8,25 +8,58 @@ datasource db {
 }
 
 model Site {
-  id          String     @id @default(cuid())
-  url         String     @unique
-  title       String
-  description String?
-  faviconUrl  String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  categories  Category[]
-  tags        Tag[]
+  id            String         @id @default(cuid())
+  url           String         @unique
+  title         String
+  description   String?
+  faviconUrl    String?
+  imageUrl      String?
+  lastFetchedAt DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  categories    SiteCategory[]
+  tags          SiteTag[]
+
+  @@index([title])
+  @@index([description])
+  @@index([title, description])
 }
 
 model Category {
   id    String @id @default(cuid())
   name  String @unique
-  sites Site[]
+
+  sites SiteCategory[]
 }
 
 model Tag {
   id    String @id @default(cuid())
   name  String @unique
-  sites Site[]
+
+  sites SiteTag[]
+}
+
+model SiteCategory {
+  siteId     String
+  categoryId String
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([siteId, categoryId])
+  @@index([categoryId])
+  @@index([siteId])
+}
+
+model SiteTag {
+  siteId String
+  tagId  String
+  site   Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@id([siteId, tagId])
+  @@index([tagId])
+  @@index([siteId])
 }
