@@ -13,9 +13,9 @@ export default async function Home({ searchParams }: { searchParams: { [key: str
   const page = toInt(searchParams.page) ?? 1;
 
   const [{ items, total, totalPages, page: currentPage }, categories, tags] = await Promise.all([
-    Promise.resolve(filterAndPaginateSites({ q, category, tag, page })),
-    Promise.resolve(getAllCategories()),
-    Promise.resolve(getAllTags()),
+    filterAndPaginateSites({ q, category, tag, page }),
+    getAllCategories(),
+    getAllTags(),
   ]);
 
   return (
