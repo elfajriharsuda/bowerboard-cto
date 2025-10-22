@@ -1,51 +1,27 @@
 import { NextResponse } from "next/server";
-
-function parseUrl(input: string): string | null {
-  const val = input.trim();
-  if (!val) return null;
-  try {
-    return new URL(val).toString();
-  } catch (_) {
-    try {
-      return new URL("http://" + val).toString();
-    } catch (_e) {
-      return null;
-    }
-  }
-}
+import { fetchSiteMetadata, MetadataFetchError } from "../../../lib/metadata";
+import { normalizeUrl } from "../../../lib/url";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const raw = searchParams.get("url") || "";
-  const target = parseUrl(raw);
-  if (!target) {
+  const raw = searchParams.get("url");
+  if (!raw) {
     return NextResponse.json({ error: "url query param is required" }, { status: 400 });
   }
 
+  const normalized = normalizeUrl(raw);
+  if (!normalized) {
+    return NextResponse.json({ error: "url query param must be a valid http(s) URL" }, { status: 400 });
+  }
+
   try {
-    const ogs = await import("open-graph-scraper");
-    const timeout = Number(process.env.METADATA_TIMEOUT_MS || "8000");
-    const userAgent = process.env.METADATA_USER_AGENT || "BookmarkMetadataFetcher/1.0";
-
-    const { result } = await ogs.default({
-      url: target,
-      timeout,
-      headers: { "user-agent": userAgent },
-      followAllRedirects: true,
-      maxRedirects: 5,
-      retry: 1,
-    });
-
-    const title = String(result.ogTitle || result.twitterTitle || result.requestUrl || "");
-    const description = String(result.ogDescription || result.twitterDescription || result.dcDescription || "");
-    let favicon = "" as string;
-    const possibleIcons = Array.isArray(result.favicon) ? result.favicon : result.favicon ? [result.favicon] : [];
-    if (possibleIcons.length) {
-      favicon = possibleIcons[0] as string;
+    const metadata = await fetchSiteMetadata(normalized);
+    return NextResponse.json(metadata, { status: 200 });
+  } catch (error) {
+    if (error instanceof MetadataFetchError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
     }
-
-    return NextResponse.json({ title, description, favicon }, { status: 200 });
-  } catch (e) {
+    console.error("Failed to fetch metadata", error);
     return NextResponse.json({ error: "failed to fetch metadata" }, { status: 500 });
   }
 }
